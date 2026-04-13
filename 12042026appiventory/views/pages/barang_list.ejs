@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= title %></title>
+<%- include('../partials/head') %>
+</head>
+<body>
+<%- include('../partials/sidebar', { currentPath: '/barang', currentKategori: kategori }) %>
+<div class="main" id="main">
+  <%- include('../partials/topbar', {
+    pageTitle: kategori,
+    pageSubtitle: 'Pendataan Barang Masuk & Keluar',
+    actions: `
+      <a href="/export/excel?kategori=${kategori}" class="btn btn-success btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export Excel
+      </a>
+      <a href="/barang/tambah?kategori=${kategori}" class="btn btn-primary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tambah Barang
+      </a>
+    `
+  }) %>
+  <div class="content">
+    <%- include('../partials/alerts') %>
+
+    <!-- KATEGORI TABS -->
+    <div class="nav-pills mb-4">
+      <% kategoriList.forEach(k => { %>
+      <a href="/barang?kategori=<%= k %>" class="pill <%= k === kategori ? 'active' : '' %>"><%= k %></a>
+      <% }) %>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="card mb-4">
+      <div class="card-body" style="padding:14px 18px !important;">
+        <form method="GET" action="/barang" class="flex items-center gap-3" style="flex-wrap:wrap;">
+          <input type="hidden" name="kategori" value="<%= kategori %>">
+          <div class="input-group" style="max-width:320px;width:100%;">
+            <input type="text" name="search" value="<%= search %>" class="form-control" placeholder="Cari nama barang...">
+            <button type="submit" class="btn btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+          </div>
+          <% if (search) { %>
+          <a href="/barang?kategori=<%= kategori %>" class="btn btn-ghost btn-sm">✕ Reset</a>
+          <% } %>
+          <span style="font-size:12px;color:#9ca3af;"><%= barang.length %> data ditemukan</span>
+        </form>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Data Barang <%= kategori %></div>
+        <span class="badge badge-blue"><%= barang.length %> entri</span>
+      </div>
+      <% if (barang.length > 0) { %>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Tanggal</th>
+              <th>Kode</th>
+              <th>Nama Barang</th>
+              <th>Jenis</th>
+              <th>Satuan</th>
+              <th>Stok Awal</th>
+              <th>Masuk</th>
+              <th>Keluar</th>
+              <th>Stok Akhir</th>
+              <th>Harga</th>
+              <th>Total Nilai</th>
+              <th>Supplier</th>
+              <% if (extraFields.includes('expired')) { %><th>Expired</th><% } %>
+              <% if (extraFields.includes('kondisi')) { %><th>Kondisi</th><% } %>
+              <% if (extraFields.includes('lokasi')) { %><th>Lokasi</th><% } %>
+              <% if (extraFields.includes('status')) { %><th>Status</th><% } %>
+              <% if (extraFields.includes('pj')) { %><th>PJ</th><% } %>
+              <% if (extraFields.includes('nama_penerima')) { %><th>Penerima</th><% } %>
+              <% if (extraFields.includes('nrp_nip')) { %><th>NRP/NIP</th><% } %>
+              <% if (extraFields.includes('unit')) { %><th>Unit</th><% } %>
+              <% if (extraFields.includes('ket')) { %><th>Ket</th><% } %>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% barang.forEach((b, i) => { %>
+            <tr>
+              <td style="color:#9ca3af;font-size:12px;"><%= i+1 %></td>
+              <td style="font-size:12px;color:#6b7280;"><%= b.tanggal ? new Date(b.tanggal).toLocaleDateString('id-ID') : '-' %></td>
+              <td><code style="font-size:11px;color:#6366f1;background:#ede9fe;padding:2px 6px;border-radius:4px;"><%= b.kode_barang || '-' %></code></td>
+              <td style="font-weight:600;min-width:160px;"><%= b.nama_barang %></td>
+              <td style="color:#6b7280;"><%= b.jenis || '-' %></td>
+              <td style="color:#6b7280;"><%= b.satuan || '-' %></td>
+              <td><%= b.stok_awal %></td>
+              <td><span class="badge badge-green">+<%= b.masuk %></span></td>
+              <td><span class="badge badge-red">-<%= b.keluar %></span></td>
+              <td style="font-weight:700;"><%= b.stok_akhir %></td>
+              <td style="font-size:12px;color:#6b7280;">Rp <%= Number(b.harga).toLocaleString('id-ID') %></td>
+              <td style="font-size:12px;color:#6b7280;">Rp <%= Number(b.total_nilai).toLocaleString('id-ID') %></td>
+              <td style="font-size:12px;"><%= b.supplier || '-' %></td>
+              <% if (extraFields.includes('expired')) { %>
+              <td><% if (b.expired) { %><span class="badge <%= new Date(b.expired) < new Date() ? 'badge-red' : 'badge-green' %>"><%= new Date(b.expired).toLocaleDateString('id-ID') %></span><% } else { %>-<% } %></td>
+              <% } %>
+              <% if (extraFields.includes('kondisi')) { %>
+              <td><span class="badge <%= b.kondisi === 'Baik' ? 'badge-green' : b.kondisi === 'Rusak Berat' ? 'badge-red' : 'badge-yellow' %>"><%= b.kondisi || '-' %></span></td>
+              <% } %>
+              <% if (extraFields.includes('lokasi')) { %><td style="font-size:12px;"><%= b.lokasi || '-' %></td><% } %>
+              <% if (extraFields.includes('status')) { %><td><span class="badge <%= b.status === 'Aktif' ? 'badge-green' : 'badge-yellow' %>"><%= b.status || '-' %></span></td><% } %>
+              <% if (extraFields.includes('pj')) { %><td style="font-size:12px;"><%= b.pj || '-' %></td><% } %>
+              <% if (extraFields.includes('nama_penerima')) { %><td style="font-size:12px;"><%= b.nama_penerima || '-' %></td><% } %>
+              <% if (extraFields.includes('nrp_nip')) { %><td style="font-size:12px;"><code><%= b.nrp_nip || '-' %></code></td><% } %>
+              <% if (extraFields.includes('unit')) { %><td style="font-size:12px;"><%= b.unit || '-' %></td><% } %>
+              <% if (extraFields.includes('ket')) { %><td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= b.ket %>"><%= b.ket || '-' %></td><% } %>
+              <td>
+                <div class="flex gap-2">
+                  <a href="/barang/edit/<%= b.id %>" class="btn btn-warning btn-sm" title="Edit">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </a>
+                  <form method="POST" action="/barang/<%= b.id %>?_method=DELETE" onsubmit="return confirm('Hapus barang ini?')" style="margin:0;">
+                    <button type="submit" class="btn btn-danger btn-sm" title="Hapus">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } else { %>
+      <div style="text-align:center;padding:56px;color:#9ca3af;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 16px;display:block;"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+        <p style="margin-bottom:16px;font-size:14px;">Belum ada data untuk kategori <%= kategori %></p>
+        <a href="/barang/tambah?kategori=<%= kategori %>" class="btn btn-primary btn-sm">+ Tambah Barang Pertama</a>
+      </div>
+      <% } %>
+    </div>
+  </div>
+  <%- include('../partials/footer') %>
+</div>
+<%- include('../partials/scripts') %>
+</body>
+</html>

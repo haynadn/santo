@@ -1,0 +1,29 @@
+{
+  "name": "departemen-inventaris",
+  "version": "1.0.0",
+  "description": "Sistem Inventaris Departemen",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "seed": "node src/seed.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "pg": "^8.11.3",
+    "bcryptjs": "^2.4.3",
+    "ejs": "^3.1.9",
+    "method-override": "^3.0.0",
+    "connect-flash": "^0.1.1",
+    "exceljs": "^4.4.0",
+    "dotenv": "^16.3.1",
+    "connect-pg-simple": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

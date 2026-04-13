@@ -1,0 +1,11 @@
+<div class="topbar">
+  <div class="topbar-info">
+    <div class="topbar-title"><%= pageTitle %></div>
+    <% if (typeof pageSubtitle !== 'undefined' && pageSubtitle) { %>
+    <div class="topbar-sub"><%= pageSubtitle %></div>
+    <% } %>
+  </div>
+  <div class="flex items-center gap-3">
+    <%- typeof actions !== 'undefined' ? actions : '' %>
+  </div>
+</div>

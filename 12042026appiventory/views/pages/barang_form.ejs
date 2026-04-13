@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= title %></title>
+<%- include('../partials/head') %>
+</head>
+<body>
+<%- include('../partials/sidebar', { currentPath: '/barang', currentKategori: kategori }) %>
+<div class="main" id="main">
+  <%- include('../partials/topbar', {
+    pageTitle: barang ? 'Edit Barang' : 'Tambah Barang',
+    pageSubtitle: `Kategori: ${kategori}`,
+    actions: `<a href="/barang?kategori=${kategori}" class="btn btn-ghost btn-sm">← Kembali</a>`
+  }) %>
+  <div class="content">
+    <%- include('../partials/alerts') %>
+    <div style="max-width:780px;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><%= barang ? '✏ Edit Data Barang' : '+ Tambah Barang Baru' %></div>
+          <span class="badge badge-blue"><%= kategori %></span>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="<%= barang ? `/barang/${barang.id}?_method=PUT` : '/barang' %>">
+
+            <div class="form-group">
+              <label>Kategori</label>
+              <select name="kategori" class="form-control" onchange="window.location.href='/barang/tambah?kategori='+this.value">
+                <% kategoriList.forEach(k => { %>
+                <option value="<%= k %>" <%= k === kategori ? 'selected' : '' %>><%= k %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="section-label blue">Informasi Dasar</div>
+            <div class="grid grid-2">
+              <div class="form-group">
+                <label>Tanggal *</label>
+                <input type="date" name="tanggal" class="form-control" required
+                       value="<%= barang && barang.tanggal ? new Date(barang.tanggal).toISOString().split('T')[0] : '' %>">
+              </div>
+              <div class="form-group">
+                <label>Kode Barang</label>
+                <input type="text" name="kode_barang" class="form-control" placeholder="cth: BKS-001"
+                       value="<%= barang ? barang.kode_barang || '' : '' %>">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Nama Barang *</label>
+              <input type="text" name="nama_barang" class="form-control" required placeholder="Nama lengkap barang"
+                     value="<%= barang ? barang.nama_barang || '' : '' %>">
+            </div>
+
+            <div class="grid grid-2">
+              <div class="form-group">
+                <label>Jenis</label>
+                <input type="text" name="jenis" class="form-control" placeholder="Jenis/tipe barang"
+                       value="<%= barang ? barang.jenis || '' : '' %>">
+              </div>
+              <div class="form-group">
+                <label>Satuan</label>
+                <input type="text" name="satuan" class="form-control" placeholder="pcs / unit / box"
+                       value="<%= barang ? barang.satuan || '' : '' %>">
+              </div>
+            </div>
+
+            <div class="section-label green">Data Stok & Harga</div>
+            <div class="grid grid-3">
+              <div class="form-group">
+                <label>Stok Awal</label>
+                <input type="number" name="stok_awal" class="form-control" min="0"
+                       value="<%= barang ? barang.stok_awal : 0 %>" oninput="hitungStok()">
+              </div>
+              <div class="form-group">
+                <label>Masuk</label>
+                <input type="number" name="masuk" class="form-control" min="0"
+                       value="<%= barang ? barang.masuk : 0 %>" oninput="hitungStok()">
+              </div>
+              <div class="form-group">
+                <label>Keluar</label>
+                <input type="number" name="keluar" class="form-control" min="0"
+                       value="<%= barang ? barang.keluar : 0 %>" oninput="hitungStok()">
+              </div>
+            </div>
+
+            <div class="grid grid-2 mb-4">
+              <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:16px;">
+                <div style="font-size:11px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Stok Akhir (otomatis)</div>
+                <div id="stok_akhir_display" style="font-size:28px;font-weight:800;color:#10b981;line-height:1;">
+                  <%= barang ? barang.stok_akhir : 0 %>
+                </div>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Harga Satuan (Rp)</label>
+                <input type="number" name="harga" class="form-control" min="0" step="0.01"
+                       value="<%= barang ? barang.harga : 0 %>" placeholder="0">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Supplier</label>
+              <input type="text" name="supplier" class="form-control" placeholder="Nama supplier/vendor"
+                     value="<%= barang ? barang.supplier || '' : '' %>">
+            </div>
+
+            <% if (extraFields.length > 0) { %>
+            <div class="section-label purple">Data Tambahan (<%= kategori %>)</div>
+            <% } %>
+
+            <% if (extraFields.includes('expired')) { %>
+            <div class="form-group">
+              <label>Tanggal Expired</label>
+              <input type="date" name="expired" class="form-control"
+                     value="<%= barang && barang.expired ? new Date(barang.expired).toISOString().split('T')[0] : '' %>">
+            </div>
+            <% } %>
+
+            <% if (extraFields.includes('kondisi')) { %>
+            <div class="form-group">
+              <label>Kondisi</label>
+              <select name="kondisi" class="form-control">
+                <option value="">-- Pilih Kondisi --</option>
+                <% ['Baik','Rusak Ringan','Rusak Berat','Tidak Layak Pakai'].forEach(k => { %>
+                <option value="<%= k %>" <%= barang && barang.kondisi === k ? 'selected' : '' %>><%= k %></option>
+                <% }) %>
+              </select>
+            </div>
+            <% } %>
+
+            <% if (extraFields.includes('lokasi')) { %>
+            <div class="form-group">
+              <label>Lokasi</label>
+              <input type="text" name="lokasi" class="form-control" placeholder="Lokasi penyimpanan"
+                     value="<%= barang ? barang.lokasi || '' : '' %>">
+            </div>
+            <% } %>
+
+            <% if (extraFields.includes('status')) { %>
+            <div class="form-group">
+              <label>Status</label>
+              <select name="status" class="form-control">
+                <option value="">-- Pilih Status --</option>
+                <% ['Aktif','Tidak Aktif','Dalam Pemeliharaan','Rusak'].forEach(s => { %>
+                <option value="<%= s %>" <%= barang && barang.status === s ? 'selected' : '' %>><%= s %></option>
+                <% }) %>
+              </select>
+            </div>
+            <% } %>
+
+            <% if (extraFields.includes('tgl_pemeliharaan')) { %>
+            <div class="form-group">
+              <label>Tanggal Pemeliharaan</label>
+              <input type="date" name="tgl_pemeliharaan" class="form-control"
+                     value="<%= barang && barang.tgl_pemeliharaan ? new Date(barang.tgl_pemeliharaan).toISOString().split('T')[0] : '' %>">
+            </div>
+            <% } %>
+
+            <% if (extraFields.includes('pj')) { %>
+            <div class="form-group">
+              <label>Penanggung Jawab (PJ)</label>
+              <input type="text" name="pj" class="form-control" placeholder="Nama PJ"
+                     value="<%= barang ? barang.pj || '' : '' %>">
+            </div>
+            <% } %>
+
+            <% if (extraFields.includes('nama_penerima')) { %>
+            <div class="grid grid-3">
+              <div class="form-group">
+                <label>Nama Penerima</label>
+                <input type="text" name="nama_penerima" class="form-control" value="<%= barang ? barang.nama_penerima || '' : '' %>">
+              </div>
+              <div class="form-group">
+                <label>NRP/NIP</label>
+                <input type="text" name="nrp_nip" class="form-control" value="<%= barang ? barang.nrp_nip || '' : '' %>">
+              </div>
+              <div class="form-group">
+                <label>Unit</label>
+                <input type="text" name="unit" class="form-control" value="<%= barang ? barang.unit || '' : '' %>">
+              </div>
+            </div>
+            <% } %>
+
+            <% if (extraFields.includes('ket')) { %>
+            <div class="form-group">
+              <label>Keterangan</label>
+              <textarea name="ket" class="form-control" rows="3" placeholder="Catatan tambahan..."><%= barang ? barang.ket || '' : '' %></textarea>
+            </div>
+            <% } %>
+
+            <div class="flex gap-3 mt-4">
+              <button type="submit" class="btn btn-primary">
+                <%= barang ? '💾 Simpan Perubahan' : '+ Tambah Barang' %>
+              </button>
+              <a href="/barang?kategori=<%= kategori %>" class="btn btn-ghost">Batal</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <%- include('../partials/footer') %>
+</div>
+
+<script>
+function hitungStok() {
+  const a = parseInt(document.querySelector('[name=stok_awal]').value)||0;
+  const m = parseInt(document.querySelector('[name=masuk]').value)||0;
+  const k = parseInt(document.querySelector('[name=keluar]').value)||0;
+  document.getElementById('stok_akhir_display').textContent = a + m - k;
+}
+</script>
+<%- include('../partials/scripts') %>
+</body>
+</html>

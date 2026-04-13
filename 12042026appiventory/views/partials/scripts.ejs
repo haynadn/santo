@@ -1,0 +1,15 @@
+<script>
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  const m = document.getElementById('main');
+  s.classList.toggle('collapsed');
+  m.classList.toggle('expanded');
+  localStorage.setItem('sidebarCollapsed', s.classList.contains('collapsed'));
+}
+if (localStorage.getItem('sidebarCollapsed') === 'true') {
+  const s = document.getElementById('sidebar');
+  const m = document.getElementById('main');
+  if (s) s.classList.add('collapsed');
+  if (m) m.classList.add('expanded');
+}
+</script>

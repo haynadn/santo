@@ -28,7 +28,7 @@
             <div class="form-group">
               <label>Kategori</label>
               <select name="kategori" class="form-control" onchange="window.location.href='/barang/tambah?kategori='+this.value">
-                <% kategoriList.forEach(k => { %>
+                <% ['BEKKES','ALKES','ATK','ART','ALSINTOR','ALSATRI','ALKOMLEK','BANGFAS'].forEach(k => { %>
                 <option value="<%= k %>" <%= k === kategori ? 'selected' : '' %>><%= k %></option>
                 <% }) %>
               </select>
@@ -61,10 +61,50 @@
                        value="<%= barang ? barang.jenis || '' : '' %>">
               </div>
               <div class="form-group">
+                <label>Merk / Type Barang</label>
+                <input type="text" name="merk_type" class="form-control" placeholder="cth: Samsung, Philips, dll"
+                       value="<%= barang ? barang.merk_type || '' : '' %>">
+              </div>
+            </div>
+
+            <div class="grid grid-2">
+              <div class="form-group">
                 <label>Satuan</label>
                 <input type="text" name="satuan" class="form-control" placeholder="pcs / unit / box"
                        value="<%= barang ? barang.satuan || '' : '' %>">
               </div>
+              <div class="form-group">
+                <label>Kondisi</label>
+                <select name="kondisi" class="form-control">
+                  <option value="">-- Pilih Kondisi --</option>
+                  <% ['Baik','Rusak Ringan','Rusak Berat','Tidak Beroperasi'].forEach(k => { %>
+                  <option value="<%= k %>" <%= barang && barang.kondisi === k ? 'selected' : '' %>><%= k %></option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-2">
+              <div class="form-group">
+                <label>Sumber Pendanaan</label>
+                <select name="sumber_pendanaan" class="form-control">
+                  <option value="">-- Pilih Sumber --</option>
+                  <% ['Kemhan','Kesdam','Swakelola'].forEach(s => { %>
+                  <option value="<%= s %>" <%= barang && barang.sumber_pendanaan === s ? 'selected' : '' %>><%= s %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Posisi Barang di Ruangan</label>
+                <input type="text" name="posisi_ruangan" class="form-control" placeholder="cth: Gudang A, Ruang B"
+                       value="<%= barang ? barang.posisi_ruangan || '' : '' %>">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Nama Penerima Barang</label>
+              <input type="text" name="nama_penerima" class="form-control" placeholder="Nama penerima barang"
+                     value="<%= barang ? barang.nama_penerima || '' : '' %>">
             </div>
 
             <div class="section-label green">Data Stok & Harga</div>
@@ -106,10 +146,7 @@
                      value="<%= barang ? barang.supplier || '' : '' %>">
             </div>
 
-            <% if (extraFields.length > 0) { %>
-            <div class="section-label purple">Data Tambahan (<%= kategori %>)</div>
-            <% } %>
-
+            <!-- EXTRA FIELDS per kategori -->
             <% if (extraFields.includes('expired')) { %>
             <div class="form-group">
               <label>Tanggal Expired</label>
@@ -118,22 +155,10 @@
             </div>
             <% } %>
 
-            <% if (extraFields.includes('kondisi')) { %>
-            <div class="form-group">
-              <label>Kondisi</label>
-              <select name="kondisi" class="form-control">
-                <option value="">-- Pilih Kondisi --</option>
-                <% ['Baik','Rusak Ringan','Rusak Berat','Tidak Layak Pakai'].forEach(k => { %>
-                <option value="<%= k %>" <%= barang && barang.kondisi === k ? 'selected' : '' %>><%= k %></option>
-                <% }) %>
-              </select>
-            </div>
-            <% } %>
-
             <% if (extraFields.includes('lokasi')) { %>
             <div class="form-group">
-              <label>Lokasi</label>
-              <input type="text" name="lokasi" class="form-control" placeholder="Lokasi penyimpanan"
+              <label>Lokasi Detail</label>
+              <input type="text" name="lokasi" class="form-control" placeholder="Lokasi penyimpanan detail"
                      value="<%= barang ? barang.lokasi || '' : '' %>">
             </div>
             <% } %>
@@ -166,12 +191,8 @@
             </div>
             <% } %>
 
-            <% if (extraFields.includes('nama_penerima')) { %>
-            <div class="grid grid-3">
-              <div class="form-group">
-                <label>Nama Penerima</label>
-                <input type="text" name="nama_penerima" class="form-control" value="<%= barang ? barang.nama_penerima || '' : '' %>">
-              </div>
+            <% if (extraFields.includes('nrp_nip')) { %>
+            <div class="grid grid-2">
               <div class="form-group">
                 <label>NRP/NIP</label>
                 <input type="text" name="nrp_nip" class="form-control" value="<%= barang ? barang.nrp_nip || '' : '' %>">

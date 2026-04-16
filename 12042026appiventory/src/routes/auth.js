@@ -10,38 +10,32 @@ router.get('/login', (req, res) => {
 
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
-
   try {
-    const result = await pool.query(
-      'SELECT * FROM users WHERE username = $1',
-      [username]
-    );
-
+    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
     const user = result.rows[0];
+
+    console.log('Login attempt:', username);
+    console.log('User found:', user ? 'yes' : 'no');
 
     if (!user) {
       req.flash('error', 'Username tidak ditemukan!');
       return res.redirect('/auth/login');
     }
 
-    const match = await bcrypt.compare(password, user.password);
+    const match = bcrypt.compareSync(password, user.password);
+    console.log('Password match:', match);
 
     if (!match) {
       req.flash('error', 'Password salah!');
       return res.redirect('/auth/login');
     }
 
-    req.session.user = {
-      id: user.id,
-      username: user.username,
-      role: user.role
-    };
-
-    return res.redirect('/');
+    req.session.user = { id: user.id, username: user.username, role: user.role };
+    res.redirect('/');
   } catch (err) {
     console.error('Login error:', err);
-    req.flash('error', 'Terjadi kesalahan server');
-    return res.redirect('/auth/login');
+    req.flash('error', 'Terjadi kesalahan server: ' + err.message);
+    res.redirect('/auth/login');
   }
 });
 

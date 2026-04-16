@@ -11,9 +11,15 @@ if (connectionString.startsWith('postgres://')) {
   connectionString = connectionString.replace('postgres://', 'postgresql://');
 }
 
+// SSL otomatis: aktif untuk remote DB, mati untuk localhost
+const isRemoteDB = !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1');
+const sslConfig = process.env.DB_SSL === 'false' ? false
+  : (process.env.DB_SSL === 'true' || isRemoteDB) ? { rejectUnauthorized: false }
+  : false;
+
 const pool = new Pool({
   connectionString,
-  ssl: { rejectUnauthorized: false },
+  ssl: sslConfig,
   connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
   max: 10,

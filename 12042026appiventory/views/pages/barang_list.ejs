@@ -81,6 +81,9 @@
               <% if (extraFields.includes('lokasi')) { %><th>Lokasi</th><% } %>
               <% if (extraFields.includes('status')) { %><th>Status</th><% } %>
               <% if (extraFields.includes('pj')) { %><th>PJ</th><% } %>
+              <% if (extraFields.includes('merk_type')) { %><th>Merk/Type</th><% } %>
+              <% if (extraFields.includes('sumber_pendanaan')) { %><th>Sumber Dana</th><% } %>
+              <% if (extraFields.includes('posisi_ruangan')) { %><th>Ruangan</th><% } %>
               <% if (extraFields.includes('nama_penerima')) { %><th>Penerima</th><% } %>
               <% if (extraFields.includes('nrp_nip')) { %><th>NRP/NIP</th><% } %>
               <% if (extraFields.includes('unit')) { %><th>Unit</th><% } %>
@@ -113,6 +116,9 @@
               <% if (extraFields.includes('lokasi')) { %><td style="font-size:12px;"><%= b.lokasi || '-' %></td><% } %>
               <% if (extraFields.includes('status')) { %><td><span class="badge <%= b.status === 'Aktif' ? 'badge-green' : 'badge-yellow' %>"><%= b.status || '-' %></span></td><% } %>
               <% if (extraFields.includes('pj')) { %><td style="font-size:12px;"><%= b.pj || '-' %></td><% } %>
+              <% if (extraFields.includes('merk_type')) { %><td style="font-size:12px;"><%= b.merk_type || '-' %></td><% } %>
+              <% if (extraFields.includes('sumber_pendanaan')) { %><td style="font-size:12px;"><%= b.sumber_pendanaan || '-' %></td><% } %>
+              <% if (extraFields.includes('posisi_ruangan')) { %><td style="font-size:12px;"><%= b.posisi_ruangan || '-' %></td><% } %>
               <% if (extraFields.includes('nama_penerima')) { %><td style="font-size:12px;"><%= b.nama_penerima || '-' %></td><% } %>
               <% if (extraFields.includes('nrp_nip')) { %><td style="font-size:12px;"><code><%= b.nrp_nip || '-' %></code></td><% } %>
               <% if (extraFields.includes('unit')) { %><td style="font-size:12px;"><%= b.unit || '-' %></td><% } %>

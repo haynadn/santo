@@ -24,6 +24,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(methodOverride('_method'));
 
+// Trust proxy jika di belakang nginx/reverse proxy
+app.set('trust proxy', 1);
+
 // Session - pakai connect-pg-simple biar aman di production
 const pgSession = require('connect-pg-simple')(session);
 app.use(session({
@@ -37,7 +40,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     maxAge: 1000 * 60 * 60 * 8, // 8 jam
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.COOKIE_SECURE === 'true',
     httpOnly: true,
   }
 }));

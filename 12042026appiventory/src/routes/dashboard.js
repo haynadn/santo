@@ -3,7 +3,7 @@ const router = express.Router();
 const { pool } = require('../../config/db');
 const { requireLogin } = require('../middleware/auth');
 
-const KATEGORI_LIST = ['BEKKES','ALKES','ATK','ART','ALSINTOR','ALSATRI','ALKOMLEK','BANGFAS'];
+const KATEGORI_LIST = ['ALKES','ATK','ART','ALSINTOR','ALSATRI','ALKOMLEK','BANGFAS'];
 
 router.get('/', requireLogin, async (req, res) => {
   try {

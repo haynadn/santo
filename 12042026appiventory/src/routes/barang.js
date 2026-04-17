@@ -4,7 +4,6 @@ const { pool } = require('../../config/db');
 const { requireLogin } = require('../middleware/auth');
 
 const KATEGORI_FIELDS = {
-  BEKKES:   ['expired','supplier','sumber_pendanaan','kondisi','posisi_ruangan','nama_penerima','merk_type','ket'],
   ALKES:    ['expired','supplier','sumber_pendanaan','kondisi','posisi_ruangan','lokasi','nama_penerima','merk_type','ket'],
   ATK:      ['supplier','sumber_pendanaan','kondisi','posisi_ruangan','nama_penerima','merk_type'],
   ART:      ['expired','supplier','sumber_pendanaan','kondisi','posisi_ruangan','nama_penerima','nrp_nip','unit','merk_type'],
@@ -16,7 +15,7 @@ const KATEGORI_FIELDS = {
 
 // LIST
 router.get('/', requireLogin, async (req, res) => {
-  const kategori = req.query.kategori || 'BEKKES';
+  const kategori = req.query.kategori || 'ALKES';
   const search = req.query.search || '';
   try {
     let query = 'SELECT * FROM barang WHERE kategori=$1';
@@ -42,7 +41,7 @@ router.get('/', requireLogin, async (req, res) => {
 
 // FORM TAMBAH
 router.get('/tambah', requireLogin, (req, res) => {
-  const kategori = req.query.kategori || 'BEKKES';
+  const kategori = req.query.kategori || 'ALKES';
   res.render('pages/barang_form', {
     title: `Tambah Barang — ${kategori}`,
     barang: null,
@@ -118,7 +117,7 @@ router.put('/:id', requireLogin, async (req, res) => {
 
   try {
     const existing = await pool.query('SELECT kategori FROM barang WHERE id=$1', [req.params.id]);
-    const kategori = existing.rows[0]?.kategori || 'BEKKES';
+    const kategori = existing.rows[0]?.kategori || 'ALKES';
     await pool.query(`
       UPDATE barang SET tanggal=$1,kode_barang=$2,nama_barang=$3,jenis=$4,merk_type=$5,expired=$6,
         satuan=$7,stok_awal=$8,masuk=$9,keluar=$10,stok_akhir=$11,harga=$12,total_nilai=$13,
@@ -145,7 +144,7 @@ router.put('/:id', requireLogin, async (req, res) => {
 router.delete('/:id', requireLogin, async (req, res) => {
   try {
     const result = await pool.query('SELECT kategori FROM barang WHERE id=$1', [req.params.id]);
-    const kategori = result.rows[0]?.kategori || 'BEKKES';
+    const kategori = result.rows[0]?.kategori || 'ALKES';
     await pool.query('DELETE FROM barang WHERE id=$1', [req.params.id]);
     req.flash('success', 'Barang berhasil dihapus!');
     res.redirect(`/barang?kategori=${kategori}`);

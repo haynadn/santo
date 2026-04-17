@@ -5,7 +5,7 @@ const { pool } = require('../../config/db');
 const { requireLogin } = require('../middleware/auth');
 
 router.get('/excel', requireLogin, async (req, res) => {
-  const kategori = req.query.kategori || 'BEKKES';
+  const kategori = req.query.kategori || 'ALKES';
   try {
     const result = await pool.query('SELECT * FROM barang WHERE kategori=$1 ORDER BY created_at DESC', [kategori]);
     const rows = result.rows;

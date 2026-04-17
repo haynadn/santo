@@ -28,7 +28,7 @@
             <div class="form-group">
               <label>Kategori</label>
               <select name="kategori" class="form-control" onchange="window.location.href='/barang/tambah?kategori='+this.value">
-                <% ['BEKKES','ALKES','ATK','ART','ALSINTOR','ALSATRI','ALKOMLEK','BANGFAS'].forEach(k => { %>
+                <% ['ALKES','ATK','ART','ALSINTOR','ALSATRI','ALKOMLEK','BANGFAS'].forEach(k => { %>
                 <option value="<%= k %>" <%= k === kategori ? 'selected' : '' %>><%= k %></option>
                 <% }) %>
               </select>

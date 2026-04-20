@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const barangRoutes = require('./routes/barang');
 const exportRoutes = require('./routes/export');
+const { loggerMiddleware } = require('./middleware/logger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -46,6 +47,9 @@ app.use(session({
 }));
 
 app.use(flash());
+
+// Activity Logger (Backend only)
+app.use(loggerMiddleware);
 
 // Global locals
 app.use((req, res, next) => {

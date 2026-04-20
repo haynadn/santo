@@ -84,6 +84,16 @@ async function initDB() {
         );
 
         CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+
+        CREATE TABLE IF NOT EXISTS activity_logs (
+          id SERIAL PRIMARY KEY,
+          username VARCHAR(100),
+          method VARCHAR(10),
+          path TEXT,
+          ip_address VARCHAR(50),
+          user_agent TEXT,
+          created_at TIMESTAMP DEFAULT NOW()
+        );
       `);
 
       // Tambah kolom baru jika belum ada (untuk database yang sudah existing)

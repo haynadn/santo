@@ -422,14 +422,21 @@ textarea.form-control { resize: vertical; }
 function toggleSidebar() {
   const s = document.getElementById('sidebar');
   const m = document.getElementById('main');
-  s.classList.toggle('collapsed');
-  m.classList.toggle('expanded');
-  localStorage.setItem('sidebarCollapsed', s.classList.contains('collapsed'));
+  if (s && m) {
+    s.classList.toggle('collapsed');
+    m.classList.toggle('expanded');
+    localStorage.setItem('sidebarCollapsed', s.classList.contains('collapsed'));
+  }
 }
+
 // Restore state
 if (localStorage.getItem('sidebarCollapsed') === 'true') {
-  document.getElementById('sidebar').classList.add('collapsed');
-  document.getElementById('main').classList.add('expanded');
+  const s = document.getElementById('sidebar');
+  const m = document.getElementById('main');
+  if (s && m) {
+    s.classList.add('collapsed');
+    m.classList.add('expanded');
+  }
 }
 </script>
 </body>

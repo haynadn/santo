@@ -94,6 +94,16 @@ async function initDB() {
           user_agent TEXT,
           created_at TIMESTAMP DEFAULT NOW()
         );
+
+        CREATE TABLE IF NOT EXISTS upload_history (
+          id SERIAL PRIMARY KEY,
+          filename VARCHAR(200),
+          total_rows INTEGER DEFAULT 0,
+          inserted INTEGER DEFAULT 0,
+          failed INTEGER DEFAULT 0,
+          uploaded_by VARCHAR(100),
+          created_at TIMESTAMP DEFAULT NOW()
+        );
       `);
 
       // Tambah kolom baru jika belum ada (untuk database yang sudah existing)

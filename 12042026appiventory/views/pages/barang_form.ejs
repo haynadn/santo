@@ -108,32 +108,13 @@
             </div>
 
             <div class="section-label green">Data Stok & Harga</div>
-            <div class="grid grid-3">
-              <div class="form-group">
-                <label>Stok Awal</label>
-                <input type="number" name="stok_awal" class="form-control" min="0"
-                       value="<%= barang ? barang.stok_awal : 0 %>" oninput="hitungStok()">
-              </div>
-              <div class="form-group">
-                <label>Masuk</label>
-                <input type="number" name="masuk" class="form-control" min="0"
-                       value="<%= barang ? barang.masuk : 0 %>" oninput="hitungStok()">
-              </div>
-              <div class="form-group">
-                <label>Keluar</label>
-                <input type="number" name="keluar" class="form-control" min="0"
-                       value="<%= barang ? barang.keluar : 0 %>" oninput="hitungStok()">
-              </div>
-            </div>
-
             <div class="grid grid-2 mb-4">
-              <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:16px;">
-                <div style="font-size:11px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Stok Akhir (otomatis)</div>
-                <div id="stok_akhir_display" style="font-size:28px;font-weight:800;color:#10b981;line-height:1;">
-                  <%= barang ? barang.stok_akhir : 0 %>
-                </div>
+              <div class="form-group">
+                <label>Jumlah / Stok *</label>
+                <input type="number" name="jumlah" class="form-control" min="0" required
+                       value="<%= barang ? barang.stok_akhir : 0 %>" placeholder="0">
               </div>
-              <div class="form-group" style="margin:0;">
+              <div class="form-group">
                 <label>Harga Satuan (Rp)</label>
                 <input type="number" name="harga" class="form-control" min="0" step="0.01"
                        value="<%= barang ? barang.harga : 0 %>" placeholder="0">
@@ -226,12 +207,7 @@
 </div>
 
 <script>
-function hitungStok() {
-  const a = parseInt(document.querySelector('[name=stok_awal]').value)||0;
-  const m = parseInt(document.querySelector('[name=masuk]').value)||0;
-  const k = parseInt(document.querySelector('[name=keluar]').value)||0;
-  document.getElementById('stok_akhir_display').textContent = a + m - k;
-}
+// Logic hitung otomatis dihapus karena sekarang hanya input Jumlah langsung
 </script>
 <%- include('../partials/scripts') %>
 </body>

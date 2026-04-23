@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Excel — Departemen Inventaris</title>
+<%- include('../partials/head') %>
+<style>
+.upload-zone {
+  border: 2px dashed #d1d5db; border-radius: 14px;
+  padding: 44px 28px; text-align: center; cursor: pointer;
+  transition: all 0.2s; background: #fafafa;
+}
+.upload-zone:hover, .upload-zone.drag-over { border-color: var(--primary); background: #f5f3ff; }
+.upload-zone svg { width: 44px; height: 44px; stroke: #9ca3af; margin: 0 auto 12px; display: block; }
+.upload-zone.drag-over svg { stroke: var(--primary); }
+
+.step-flow { display: flex; align-items: center; }
+.step-item { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; }
+.step-item:not(:last-child)::after { content:''; position:absolute; top:16px; left:50%; right:-50%; height:2px; background:#e5e7eb; z-index:0; }
+.step-item.done:not(:last-child)::after { background: var(--success); }
+.step-item.active:not(:last-child)::after { background: var(--primary); }
+.step-circle { width:32px; height:32px; border-radius:50%; border:2px solid #e5e7eb; background:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#9ca3af; z-index:1; position:relative; }
+.step-item.active .step-circle { border-color:var(--primary); color:var(--primary); background:#ede9fe; }
+.step-item.done .step-circle { border-color:var(--success); background:var(--success); color:#fff; }
+.step-label { font-size:10px; color:#9ca3af; margin-top:5px; text-align:center; font-weight:500; }
+.step-item.active .step-label { color:var(--primary); font-weight:700; }
+.step-item.done .step-label { color:var(--success); }
+
+.progress-bar { height:5px; background:#e5e7eb; border-radius:3px; overflow:hidden; margin:10px 0; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--success)); border-radius:3px; transition:width 0.3s ease; width:0%; }
+
+.sheet-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; background:#ede9fe; color:#5b21b6; margin:3px; }
+
+.preview-wrap { overflow-x:auto; max-height:420px; overflow-y:auto; }
+.preview-table { font-size:12px; width:100%; border-collapse:collapse; }
+.preview-table th { padding:9px 12px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#6b7280; background:#f9fafb; border-bottom:1px solid #e5e7eb; white-space:nowrap; position:sticky; top:0; z-index:2; }
+.preview-table td { padding:8px 12px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
+.preview-table .row-valid { background:#f0fdf4; }
+.preview-table .row-error { background:#fff5f5; }
+
+.tag { display:inline-flex; align-items:center; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
+.tag-green { background:#d1fae5; color:#065f46; }
+.tag-red   { background:#fee2e2; color:#991b1b; }
+.tag-blue  { background:#ede9fe; color:#5b21b6; }
+.tag-yellow{ background:#fef3c7; color:#92400e; }
+.tag-gray  { background:#f3f4f6; color:#374151; }
+
+.result-box { border-radius:12px; padding:28px; text-align:center; }
+.result-box.success { background:linear-gradient(135deg,#d1fae5,#a7f3d0); border:1.5px solid #6ee7b7; }
+.result-box.partial { background:linear-gradient(135deg,#fef3c7,#fde68a); border:1.5px solid #fcd34d; }
+.result-box.fail    { background:linear-gradient(135deg,#fee2e2,#fecaca); border:1.5px solid #fca5a5; }
+
+.history-item { display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid #f3f4f6; }
+.history-item:last-child { border-bottom:none; }
+.history-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+.err-box { background:#fff5f5; border:1px solid #fecaca; border-radius:8px; margin:12px 18px; }
+.err-box-header { padding:10px 14px; font-size:12px; font-weight:700; color:#991b1b; cursor:pointer; display:flex; justify-content:space-between; }
+.err-box-body { padding:0 14px 10px; display:none; max-height:200px; overflow-y:auto; }
+.err-box-body.open { display:block; }
+</style>
+</head>
+<body>
+<%- include('../partials/sidebar', { currentPath: '/upload', currentKategori: '' }) %>
+<div class="main" id="main">
+  <%- include('../partials/topbar', {
+    pageTitle: 'Upload Excel',
+    pageSubtitle: 'Import data inventaris dari file Excel multi-sheet',
+    actions: `<a href="/upload/template" class="btn btn-success btn-sm">⬇ Download Template</a>`
+  }) %>
+
+  <div class="content">
+    <!-- STEP FLOW -->
+    <div class="card mb-4">
+      <div class="card-body" style="padding:18px 28px !important;">
+        <div class="step-flow" id="stepFlow">
+          <div class="step-item active" id="s1"><div class="step-circle">1</div><div class="step-label">Upload File</div></div>
+          <div class="step-item" id="s2"><div class="step-circle">2</div><div class="step-label">Parse & Validasi</div></div>
+          <div class="step-item" id="s3"><div class="step-circle">3</div><div class="step-label">Preview</div></div>
+          <div class="step-item" id="s4"><div class="step-circle">4</div><div class="step-label">Konfirmasi</div></div>
+          <div class="step-item" id="s5"><div class="step-circle">✓</div><div class="step-label">Hasil</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;">
+
+      <!-- KIRI -->
+      <div>
+        <div class="card mb-4">
+          <div class="card-header"><div class="card-title">📂 Pilih File Excel</div></div>
+          <div class="card-body">
+            <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <div style="font-size:14px;font-weight:700;color:#374151;margin-bottom:5px;">Drag & Drop atau Klik</div>
+              <div style="font-size:12px;color:#9ca3af;">.xlsx / .xls • Maks 20MB • 1000 baris/sheet</div>
+            </div>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
+            <div id="fileInfo" style="display:none;margin-top:12px;padding:11px 14px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">
+              <div style="font-size:13px;font-weight:600;color:#065f46;" id="fileName"></div>
+              <div style="font-size:11px;color:#6b7280;" id="fileSize"></div>
+            </div>
+            <div class="progress-bar" id="progressBar" style="display:none;"><div class="progress-fill" id="progressFill"></div></div>
+            <button class="btn btn-primary mt-4" style="width:100%;" id="parseBtn" onclick="parseFile()" disabled>Parsing & Validasi →</button>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header"><div class="card-title">ℹ️ Format Kolom</div></div>
+          <div class="card-body" style="font-size:12px;">
+            <p style="font-weight:600;margin-bottom:6px;color:#374151;">Kolom yang dikenali:</p>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+              <% ['Tahun','Kode Barang','Nama Barang','Merk/Type','Satuan','Jumlah','Harga','Total Nilai','Supplier','Sumber Dana','Kondisi','Lokasi','Keterangan'].forEach(c => { %>
+              <span class="tag tag-gray"><%= c %></span>
+              <% }) %>
+            </div>
+            <p style="font-weight:600;margin-bottom:6px;color:#374151;">Sheet = Kategori:</p>
+            <div style="display:flex;flex-wrap:wrap;gap:3px;">
+              <% ['ALKES','ATK','ART','ALSINTOR','ALSATRI','ALKOMLEK','BANGFAS'].forEach(k => { %>
+              <span class="tag tag-blue"><%= k %></span>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+
+        <div id="resultSection" style="display:none;"></div>
+      </div>
+
+      <!-- KANAN -->
+      <div>
+        <div class="card mb-4" id="previewCard" style="display:none;">
+          <div class="card-header">
+            <div class="card-title">👁 Preview Data</div>
+            <div id="previewStats" class="flex gap-2" style="flex-wrap:wrap;"></div>
+          </div>
+          <div id="sheetSummary" style="padding:12px 18px;border-bottom:1px solid #f3f4f6;display:none;"></div>
+          <div id="errorAccordion" style="display:none;">
+            <div class="err-box">
+              <div class="err-box-header" onclick="toggleErr()">
+                <span id="errTitle"></span>
+                <span id="errToggle">▼ Lihat</span>
+              </div>
+              <div class="err-box-body" id="errBody"></div>
+            </div>
+          </div>
+          <div class="preview-wrap">
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>Sheet</th><th>Baris</th><th>Status</th>
+                  <th>Nama Barang</th><th>Kode</th><th>Merk/Type</th>
+                  <th>Jumlah</th><th>Harga</th><th>Kondisi</th>
+                  <th>Sumber Dana</th><th>Lokasi</th>
+                </tr>
+              </thead>
+              <tbody id="previewBody"></tbody>
+            </table>
+          </div>
+          <div style="padding:16px 18px;border-top:1px solid #f3f4f6;display:flex;gap:10px;" id="confirmSection">
+            <button class="btn btn-primary" id="confirmBtn" onclick="confirmImport()" style="flex:1;">✅ Import Data Valid</button>
+            <button class="btn btn-ghost" onclick="resetAll()">Reset</button>
+          </div>
+        </div>
+
+        <!-- History -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Riwayat Upload</div>
+            <span class="badge badge-gray">30 Terakhir</span>
+          </div>
+          <% if (history.length === 0) { %>
+          <div style="text-align:center;padding:32px;color:#9ca3af;">
+            <div style="font-size:32px;margin-bottom:8px;">📭</div>
+            <div style="font-size:13px;">Belum ada riwayat upload</div>
+          </div>
+          <% } else { %>
+            <% history.forEach(h => { %>
+            <div class="history-item">
+              <div class="history-dot" style="background:<%= h.failed===0?'#10b981':h.inserted>0?'#f59e0b':'#ef4444' %>"></div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= h.filename %></div>
+                <div style="font-size:11px;color:#9ca3af;"><%= new Date(h.created_at).toLocaleString('id-ID') %> • <%= h.uploaded_by %></div>
+              </div>
+              <div class="flex gap-2" style="flex-shrink:0;">
+                <span class="tag tag-gray"><%= h.total_rows %> baris</span>
+                <span class="tag tag-green">✓ <%= h.inserted %></span>
+                <% if (h.failed > 0) { %><span class="tag tag-red">✗ <%= h.failed %></span><% } %>
+              </div>
+            </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <%- include('../partials/footer') %>
+</div>
+
+<script>
+let parsedData = null;
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover', e=>{e.preventDefault();dropZone.classList.add('drag-over');});
+dropZone.addEventListener('dragleave', ()=>dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e=>{e.preventDefault();dropZone.classList.remove('drag-over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+fileInput.addEventListener('change', e=>{if(e.target.files[0])handleFile(e.target.files[0]);});
+
+function handleFile(file) {
+  if (!file.name.match(/\.(xlsx|xls)$/i)){alert('Hanya file Excel!');return;}
+  document.getElementById('fileName').textContent = '📄 '+file.name;
+  document.getElementById('fileSize').textContent = (file.size/1024).toFixed(1)+' KB';
+  document.getElementById('fileInfo').style.display = 'block';
+  document.getElementById('parseBtn').disabled = false;
+  fileInput._file = file;
+  setStep(1);
+}
+
+function setStep(done) {
+  for(let i=1;i<=5;i++){
+    const el=document.getElementById('s'+i);
+    el.classList.remove('active','done');
+    if(i<done+1) el.classList.add('done');
+    else if(i===done+1) el.classList.add('active');
+  }
+}
+
+function animateProgress(from,to,cb){
+  const fill=document.getElementById('progressFill');
+  let v=from;
+  const iv=setInterval(()=>{v=Math.min(v+3,to);fill.style.width=v+'%';if(v>=to){clearInterval(iv);if(cb)cb();}},25);
+}
+
+async function parseFile(){
+  const file=fileInput.files[0]||fileInput._file;
+  if(!file)return;
+  setStep(1);
+  document.getElementById('progressBar').style.display='block';
+  document.getElementById('parseBtn').disabled=true;
+  document.getElementById('parseBtn').textContent='⏳ Memproses...';
+  animateProgress(0,80);
+  const fd=new FormData();fd.append('file',file);
+  try{
+    const res=await fetch('/upload/preview',{method:'POST',body:fd});
+    const data=await res.json();
+    animateProgress(80,100,()=>{
+      setTimeout(()=>{
+        document.getElementById('progressBar').style.display='none';
+        document.getElementById('progressFill').style.width='0%';
+        if(!data.success){showError(data.message);resetBtn();return;}
+        parsedData=data;renderPreview(data);setStep(2);
+      },300);
+    });
+  }catch(e){showError('Gagal: '+e.message);resetBtn();}
+}
+
+function renderPreview(data){
+  document.getElementById('previewCard').style.display='block';
+  document.getElementById('previewStats').innerHTML=`
+    <span class="tag tag-blue">${data.total} baris</span>
+    <span class="tag tag-green">✓ ${data.valid} valid</span>
+    ${data.invalid>0?`<span class="tag tag-red">✗ ${data.invalid} error</span>`:''}
+    ${data.skipped>0?`<span class="tag tag-yellow">⚠ ${data.skipped} dilewati</span>`:''}
+  `;
+
+  if(data.sheets&&data.sheets.length>0){
+    const ss=document.getElementById('sheetSummary');
+    ss.style.display='block';
+    ss.innerHTML='<div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px;">SHEET TERDETEKSI:</div>'+
+      data.sheets.map(s=>`<span class="sheet-badge">📋 ${s.sheet} <span style="opacity:0.6">${s.total} baris</span></span>`).join('');
+  }
+
+  if(data.errors.length>0){
+    document.getElementById('errorAccordion').style.display='block';
+    document.getElementById('errTitle').textContent=`⚠ ${data.errors.length} baris bermasalah`;
+    document.getElementById('errBody').innerHTML=data.errors.slice(0,50).map(e=>
+      `<div style="font-size:11px;color:#dc2626;padding:2px 0;">[${e.sheet}] Baris ${e.row}: ${e.errors.join(', ')}</div>`
+    ).join('')+(data.errors.length>50?`<div style="font-size:11px;color:#9ca3af;margin-top:4px;">...dan ${data.errors.length-50} lainnya</div>`:'');
+  }
+
+  const fmt=n=>'Rp '+Number(n).toLocaleString('id-ID');
+  document.getElementById('previewBody').innerHTML=data.preview.map(r=>`
+    <tr class="${r.valid?'row-valid':'row-error'}">
+      <td><span class="tag tag-blue">${r.sheet}</span></td>
+      <td style="color:#9ca3af;">${r.row_num}</td>
+      <td>${r.valid?'<span class="tag tag-green">✓ Valid</span>':`<span class="tag tag-red" title="${r.errors.join(', ')}">✗ Error</span>`}</td>
+      <td style="font-weight:600;min-width:150px;">${r.nama_barang||'-'}</td>
+      <td><code style="font-size:10px;background:#ede9fe;color:#5b21b6;padding:1px 5px;border-radius:3px;">${r.kode_barang||'-'}</code></td>
+      <td style="font-size:12px;">${r.merk_type||'-'}</td>
+      <td style="font-weight:700;">${r.stok_akhir}</td>
+      <td style="font-size:12px;color:#6b7280;">${fmt(r.harga)}</td>
+      <td>${r.kondisi?`<span class="tag ${r.kondisi==='Baik'?'tag-green':'tag-red'}">${r.kondisi}</span>`:'-'}</td>
+      <td>${r.sumber_pendanaan?`<span class="tag tag-yellow">${r.sumber_pendanaan}</span>`:'-'}</td>
+      <td style="font-size:12px;">${r.posisi_ruangan||'-'}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('confirmSection').style.display='flex';
+  const btn=document.getElementById('confirmBtn');
+  if(data.valid===0){btn.disabled=true;btn.textContent='❌ Tidak ada data valid';}
+  else{btn.disabled=false;btn.textContent=`✅ Import ${data.valid} Data Valid`;}
+  setStep(3);
+}
+
+function toggleErr(){
+  const b=document.getElementById('errBody');
+  b.classList.toggle('open');
+  document.getElementById('errToggle').textContent=b.classList.contains('open')?'▲ Sembunyikan':'▼ Lihat';
+}
+
+async function confirmImport(){
+  if(!parsedData)return;
+  const btn=document.getElementById('confirmBtn');
+  btn.disabled=true;btn.textContent='⏳ Mengimport...';setStep(4);
+  try{
+    const res=await fetch('/upload/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:parsedData.preview})});
+    const result=await res.json();
+    setStep(5);showResult(result);
+    document.getElementById('previewCard').style.display='none';
+    setTimeout(()=>location.reload(),4000);
+  }catch(e){showError('Gagal: '+e.message);}
+}
+
+function showResult(result){
+  const sec=document.getElementById('resultSection');
+  sec.style.display='block';
+  const type=result.inserted>0&&result.failed===0?'success':result.inserted>0?'partial':'fail';
+  sec.innerHTML=`
+    <div class="result-box ${type} mb-4">
+      <div style="font-size:42px;margin-bottom:10px;">${type==='success'?'🎉':type==='partial'?'⚠️':'❌'}</div>
+      <div style="font-size:17px;font-weight:800;color:#111827;margin-bottom:5px;">
+        ${type==='success'?'Import Berhasil!':type==='partial'?'Import Sebagian':'Import Gagal'}
+      </div>
+      <div style="font-size:13px;color:#374151;margin-bottom:18px;">${result.message}</div>
+      <div style="display:flex;justify-content:center;gap:36px;">
+        <div><div style="font-size:32px;font-weight:800;color:#065f46;">${result.inserted}</div><div style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;">Berhasil</div></div>
+        <div><div style="font-size:32px;font-weight:800;color:#991b1b;">${result.failed}</div><div style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;">Gagal</div></div>
+      </div>
+      ${result.failedRows&&result.failedRows.length>0?`
+        <div style="margin-top:14px;text-align:left;background:rgba(255,255,255,0.6);padding:12px;border-radius:8px;">
+          <div style="font-size:11px;font-weight:700;color:#991b1b;margin-bottom:6px;">Detail Error:</div>
+          ${result.failedRows.slice(0,10).map(f=>`<div style="font-size:11px;color:#dc2626;">[${f.sheet}] Baris ${f.row}: ${f.error}</div>`).join('')}
+        </div>`:''
+      }
+      <div style="font-size:11px;color:#6b7280;margin-top:12px;">Halaman refresh dalam 4 detik...</div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;" onclick="resetAll()">Upload File Lain</button>
+  `;
+}
+
+function showError(msg){
+  const sec=document.getElementById('resultSection');
+  sec.style.display='block';
+  sec.innerHTML=`<div class="alert alert-error mb-4">❌ ${msg}</div><button class="btn btn-ghost" style="width:100%;" onclick="resetAll()">Coba Lagi</button>`;
+}
+
+function resetBtn(){document.getElementById('parseBtn').disabled=false;document.getElementById('parseBtn').textContent='Parsing & Validasi →';}
+
+function resetAll(){
+  parsedData=null;fileInput.value='';
+  ['fileInfo','progressBar','previewCard','resultSection','sheetSummary','errorAccordion'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  document.getElementById('previewStats').innerHTML='';
+  resetBtn();setStep(0);
+}
+</script>
+<%- include('../partials/scripts') %>
+</body>
+</html>

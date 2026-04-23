@@ -54,15 +54,15 @@ router.get('/tambah', requireLogin, (req, res) => {
 router.post('/', requireLogin, async (req, res) => {
   const {
     kategori, tanggal, kode_barang, nama_barang, jenis, merk_type, expired,
-    satuan, stok_awal, masuk, keluar, harga, supplier, sumber_pendanaan,
+    satuan, jumlah, harga, supplier, sumber_pendanaan,
     kondisi, posisi_ruangan, lokasi, status, tgl_pemeliharaan, pj,
     nama_penerima, nrp_nip, unit, ket
   } = req.body;
 
-  const sa = parseInt(stok_awal)||0, m = parseInt(masuk)||0, k = parseInt(keluar)||0;
+  const stok_akhir = parseInt(jumlah)||0;
   const h = parseFloat(harga)||0;
-  const stok_akhir = sa + m - k;
   const total_nilai = h * stok_akhir;
+  const sa = stok_akhir, m = 0, k = 0;
 
   try {
     await pool.query(`
@@ -107,13 +107,14 @@ router.get('/edit/:id', requireLogin, async (req, res) => {
 router.put('/:id', requireLogin, async (req, res) => {
   const {
     tanggal, kode_barang, nama_barang, jenis, merk_type, expired, satuan,
-    stok_awal, masuk, keluar, harga, supplier, sumber_pendanaan, kondisi,
+    jumlah, harga, supplier, sumber_pendanaan, kondisi,
     posisi_ruangan, lokasi, status, tgl_pemeliharaan, pj, nama_penerima, nrp_nip, unit, ket
   } = req.body;
 
-  const sa = parseInt(stok_awal)||0, m = parseInt(masuk)||0, k = parseInt(keluar)||0;
+  const stok_akhir = parseInt(jumlah)||0;
   const h = parseFloat(harga)||0;
-  const stok_akhir = sa + m - k;
+  const total_nilai = h * stok_akhir;
+  const sa = stok_akhir, m = 0, k = 0;
 
   try {
     const existing = await pool.query('SELECT kategori FROM barang WHERE id=$1', [req.params.id]);

@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const barangRoutes = require('./routes/barang');
 const exportRoutes = require('./routes/export');
+const uploadRoutes = require('./routes/upload');
 const { loggerMiddleware } = require('./middleware/logger');
 
 const app = express();
@@ -65,6 +66,7 @@ app.use('/auth', authRoutes);
 app.use('/', dashboardRoutes);
 app.use('/barang', barangRoutes);
 app.use('/export', exportRoutes);
+app.use('/upload', uploadRoutes);
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));

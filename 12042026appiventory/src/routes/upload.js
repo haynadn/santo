@@ -27,9 +27,11 @@ function mapRow(raw, sheetName) {
 
   const jumlah = parseInt(r['jumlah']) || 0;
   const harga  = parseFloat(r['harga'])  || 0;
+  const tahun  = r['tahun'] || '';
 
   return {
-    tanggal:          r['tahun'] ? `${r['tahun']}-01-01` : null,
+    tahun:            tahun,
+    tanggal:          tahun ? `${tahun}-01-01` : null,
     kode_barang:      String(r['kode barang'] || r['kode_barang'] || '').trim(),
     nama_barang:      String(r['nama barang'] || r['nama_barang'] || '').trim(),
     kategori:         sheetName.toUpperCase(),

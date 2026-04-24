@@ -12,6 +12,8 @@ const barangRoutes = require('./routes/barang');
 const exportRoutes = require('./routes/export');
 const uploadRoutes = require('./routes/upload');
 const { loggerMiddleware } = require('./middleware/logger');
+const { initBackupScheduler } = require('./services/backup');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -79,7 +81,12 @@ app.use((req, res) => {
 // Start
 async function start() {
   await initDB();
+  
+  // Inisialisasi backup otomatis
+  initBackupScheduler();
+
   app.listen(PORT, '0.0.0.0', () => {
+
     console.log(`🚀 Server berjalan di http://0.0.0.0:${PORT}`);
   });
 }

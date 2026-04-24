@@ -40,6 +40,12 @@ npm run seed
 http://localhost:3000
 ```
 
+### 7. Database Auto Backup (Windows)
+Aplikasi ini sudah dilengkapi fitur backup otomatis setiap jam 12 malam ke folder `backups/`.
+**Penting:** Agar fitur ini jalan, pastikan `pg_dump` PostgreSQL sudah terdaftar di Environment Variables (PATH) komputer Anda.
+Lokasi default di Windows biasanya: `C:\Program Files\PostgreSQL\<versi>\bin`
+
+
 ## 🔐 Login Default
 | Username | Password | Role |
 |----------|----------|------|

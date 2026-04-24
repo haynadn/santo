@@ -59,6 +59,11 @@
 .err-box-header { padding:10px 14px; font-size:12px; font-weight:700; color:#991b1b; cursor:pointer; display:flex; justify-content:space-between; }
 .err-box-body { padding:0 14px 10px; display:none; max-height:200px; overflow-y:auto; }
 .err-box-body.open { display:block; }
+
+.sheet-tabs { display: flex; gap: 8px; padding: 12px 18px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; overflow-x: auto; }
+.sheet-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #6b7280; border: 1px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.sheet-tab:hover { background: #f3f4f6; color: #374151; }
+.sheet-tab.active { background: #fff; color: var(--primary); border-color: #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 </style>
 </head>
 <body>
@@ -138,7 +143,7 @@
             <div class="card-title">👁 Preview Data</div>
             <div id="previewStats" class="flex gap-2" style="flex-wrap:wrap;"></div>
           </div>
-          <div id="sheetSummary" style="padding:12px 18px;border-bottom:1px solid #f3f4f6;display:none;"></div>
+          <div id="sheetTabs" class="sheet-tabs" style="display:none;"></div>
           <div id="errorAccordion" style="display:none;">
             <div class="err-box">
               <div class="err-box-header" onclick="toggleErr()">
@@ -150,12 +155,11 @@
           </div>
           <div class="preview-wrap">
             <table class="preview-table">
-              <thead>
+              <thead id="previewHead">
                 <tr>
-                  <th>Sheet</th><th>Baris</th><th>Status</th>
-                  <th>Nama Barang</th><th>Kode</th><th>Merk/Type</th>
-                  <th>Jumlah</th><th>Harga</th><th>Kondisi</th>
-                  <th>Sumber Dana</th><th>Lokasi</th>
+                  <th>No</th><th>Tahun</th><th>Kode Barang</th><th>Nama Barang</th><th class="col-merk">Merk/Type</th>
+                  <th>Satuan</th><th>Jumlah</th><th>Harga</th><th>Total Nilai</th><th>Supplier</th>
+                  <th>Sumber Dana</th><th>Kondisi</th><th>Lokasi</th><th>Keterangan</th><th>Status</th>
                 </tr>
               </thead>
               <tbody id="previewBody"></tbody>
@@ -268,14 +272,20 @@ function renderPreview(data){
     ${data.skipped>0?`<span class="tag tag-yellow">⚠ ${data.skipped} dilewati</span>`:''}
   `;
 
-  if(data.sheets&&data.sheets.length>0){
-    const ss=document.getElementById('sheetSummary');
-    ss.style.display='block';
-    ss.innerHTML='<div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px;">SHEET TERDETEKSI:</div>'+
-      data.sheets.map(s=>`<span class="sheet-badge">📋 ${s.sheet} <span style="opacity:0.6">${s.total} baris</span></span>`).join('');
+  if(data.sheets && data.sheets.length > 0){
+    const st = document.getElementById('sheetTabs');
+    st.style.display = 'flex';
+    st.innerHTML = data.sheets.map((s, idx) => `
+      <div class="sheet-tab ${idx === 0 ? 'active' : ''}" onclick="switchSheet('${s.sheet}', this)">
+        📋 ${s.sheet} (${s.total})
+      </div>
+    `).join('');
+    
+    // Default show first sheet
+    filterPreview(data.sheets[0].sheet);
   }
 
-  if(data.errors.length>0){
+  if(data.errors.length > 0){
     document.getElementById('errorAccordion').style.display='block';
     document.getElementById('errTitle').textContent=`⚠ ${data.errors.length} baris bermasalah`;
     document.getElementById('errBody').innerHTML=data.errors.slice(0,50).map(e=>
@@ -283,28 +293,48 @@ function renderPreview(data){
     ).join('')+(data.errors.length>50?`<div style="font-size:11px;color:#9ca3af;margin-top:4px;">...dan ${data.errors.length-50} lainnya</div>`:'');
   }
 
-  const fmt=n=>'Rp '+Number(n).toLocaleString('id-ID');
-  document.getElementById('previewBody').innerHTML=data.preview.map(r=>`
-    <tr class="${r.valid?'row-valid':'row-error'}">
-      <td><span class="tag tag-blue">${r.sheet}</span></td>
-      <td style="color:#9ca3af;">${r.row_num}</td>
-      <td>${r.valid?'<span class="tag tag-green">✓ Valid</span>':`<span class="tag tag-red" title="${r.errors.join(', ')}">✗ Error</span>`}</td>
-      <td style="font-weight:600;min-width:150px;">${r.nama_barang||'-'}</td>
-      <td><code style="font-size:10px;background:#ede9fe;color:#5b21b6;padding:1px 5px;border-radius:3px;">${r.kode_barang||'-'}</code></td>
-      <td style="font-size:12px;">${r.merk_type||'-'}</td>
-      <td style="font-weight:700;">${r.stok_akhir}</td>
-      <td style="font-size:12px;color:#6b7280;">${fmt(r.harga)}</td>
-      <td>${r.kondisi?`<span class="tag ${r.kondisi==='Baik'?'tag-green':'tag-red'}">${r.kondisi}</span>`:'-'}</td>
-      <td>${r.sumber_pendanaan?`<span class="tag tag-yellow">${r.sumber_pendanaan}</span>`:'-'}</td>
-      <td style="font-size:12px;">${r.posisi_ruangan||'-'}</td>
-    </tr>
-  `).join('');
-
   document.getElementById('confirmSection').style.display='flex';
   const btn=document.getElementById('confirmBtn');
   if(data.valid===0){btn.disabled=true;btn.textContent='❌ Tidak ada data valid';}
   else{btn.disabled=false;btn.textContent=`✅ Import ${data.valid} Data Valid`;}
   setStep(3);
+}
+
+function switchSheet(sheetName, el) {
+  document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  filterPreview(sheetName);
+}
+
+function filterPreview(sheetName) {
+  const data = parsedData;
+  const isATK = sheetName.toUpperCase() === 'ATK';
+  const rows = data.preview.filter(r => r.sheet === sheetName);
+  const fmt = n => 'Rp ' + Number(n).toLocaleString('id-ID');
+
+  // Toggle Merk Column
+  const merkCols = document.querySelectorAll('.col-merk');
+  merkCols.forEach(c => c.style.display = isATK ? 'none' : '');
+
+  document.getElementById('previewBody').innerHTML = rows.map((r, i) => `
+    <tr class="${r.valid ? 'row-valid' : 'row-error'}">
+      <td style="color:#9ca3af;">${i + 1}</td>
+      <td>${r.tahun || '-'}</td>
+      <td><code style="font-size:10px;background:#ede9fe;color:#5b21b6;padding:1px 5px;border-radius:3px;">${r.kode_barang || '-'}</code></td>
+      <td style="font-weight:600;min-width:150px;">${r.nama_barang || '-'}</td>
+      <td class="col-merk" style="display: ${isATK ? 'none' : ''}">${r.merk_type || '-'}</td>
+      <td>${r.satuan || '-'}</td>
+      <td style="font-weight:700;">${r.stok_akhir}</td>
+      <td style="font-size:12px;color:#6b7280;">${fmt(r.harga)}</td>
+      <td style="font-size:12px;color:#6b7280;">${fmt(r.total_nilai)}</td>
+      <td>${r.supplier || '-'}</td>
+      <td>${r.sumber_pendanaan ? `<span class="tag tag-yellow">${r.sumber_pendanaan}</span>` : '-'}</td>
+      <td>${r.kondisi ? `<span class="tag ${r.kondisi === 'Baik' ? 'tag-green' : 'tag-red'}">${r.kondisi}</span>` : '-'}</td>
+      <td style="font-size:12px;">${r.posisi_ruangan || '-'}</td>
+      <td style="font-size:11px;color:#6b7280;">${r.ket || '-'}</td>
+      <td>${r.valid ? '<span class="tag tag-green">Valid</span>' : `<span class="tag tag-red" title="${r.errors.join(', ')}">Error</span>`}</td>
+    </tr>
+  `).join('');
 }
 
 function toggleErr(){

@@ -60,10 +60,9 @@
 .err-box-body { padding:0 14px 10px; display:none; max-height:200px; overflow-y:auto; }
 .err-box-body.open { display:block; }
 
-.sheet-tabs { display: flex; gap: 8px; padding: 12px 18px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; overflow-x: auto; }
-.sheet-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #6b7280; border: 1px solid transparent; transition: all 0.2s; white-space: nowrap; }
-.sheet-tab:hover { background: #f3f4f6; color: #374151; }
-.sheet-tab.active { background: #fff; color: var(--primary); border-color: #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.sheet-tab { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:700; background:#ede9fe; color:#5b21b6; margin:3px; cursor:pointer; border:2px solid transparent; transition: all 0.2s; }
+.sheet-tab.active { border-color:#6366f1; background:#6366f1; color:#fff; }
+.sheet-tab:hover:not(.active) { background: #e0d7ff; }
 </style>
 </head>
 <body>
@@ -143,7 +142,7 @@
             <div class="card-title">👁 Preview Data</div>
             <div id="previewStats" class="flex gap-2" style="flex-wrap:wrap;"></div>
           </div>
-          <div id="sheetTabs" class="sheet-tabs" style="display:none;"></div>
+          <div id="sheetTabs" style="padding:10px 16px;border-bottom:1px solid #f3f4f6;display:flex;flex-wrap:wrap;gap:4px;display:none;"></div>
           <div id="errorAccordion" style="display:none;">
             <div class="err-box">
               <div class="err-box-header" onclick="toggleErr()">
@@ -155,13 +154,7 @@
           </div>
           <div class="preview-wrap">
             <table class="preview-table">
-              <thead id="previewHead">
-                <tr>
-                  <th>No</th><th>Tahun</th><th>Kode Barang</th><th>Nama Barang</th><th class="col-merk">Merk/Type</th>
-                  <th>Satuan</th><th>Jumlah</th><th>Harga</th><th>Total Nilai</th><th>Supplier</th>
-                  <th>Sumber Dana</th><th>Kondisi</th><th>Lokasi</th><th>Keterangan</th><th>Status</th>
-                </tr>
-              </thead>
+              <thead id="previewHead"></thead>
               <tbody id="previewBody"></tbody>
             </table>
           </div>
@@ -276,8 +269,10 @@ function renderPreview(data){
     const st = document.getElementById('sheetTabs');
     st.style.display = 'flex';
     st.innerHTML = data.sheets.map((s, idx) => `
-      <div class="sheet-tab ${idx === 0 ? 'active' : ''}" onclick="switchSheet('${s.sheet}', this)">
-        📋 ${s.sheet} (${s.total})
+      <div class="sheet-tab ${idx === 0 ? 'active' : ''}" onclick="switchSheet('${s.sheet}', this)" id="tab_${s.sheet}">
+        📋 ${s.sheet}
+        <span class="tag tag-green" style="margin-left:4px; padding: 1px 6px; font-size: 10px;">${s.valid}</span>
+        ${s.invalid > 0 ? `<span class="tag tag-red" style="padding: 1px 6px; font-size: 10px;">${s.invalid}</span>` : ''}
       </div>
     `).join('');
     
@@ -312,27 +307,30 @@ function filterPreview(sheetName) {
   const rows = data.preview.filter(r => r.sheet === sheetName);
   const fmt = n => 'Rp ' + Number(n).toLocaleString('id-ID');
 
-  // Toggle Merk Column
-  const merkCols = document.querySelectorAll('.col-merk');
-  merkCols.forEach(c => c.style.display = isATK ? 'none' : '');
+  // Dynamic Headers
+  const headers = isATK
+    ? ['No','Tahun','Kode Barang','Nama Barang','Satuan','Jumlah','Harga','Total Nilai','Supplier','Sumber Dana','Kondisi','Lokasi','Keterangan','Status']
+    : ['No','Tahun','Kode Barang','Nama Barang','Merk/Type','Satuan','Jumlah','Harga','Total Nilai','Supplier','Sumber Dana','Kondisi','Lokasi','Keterangan','Status'];
+
+  document.getElementById('previewHead').innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
 
   document.getElementById('previewBody').innerHTML = rows.map((r, i) => `
     <tr class="${r.valid ? 'row-valid' : 'row-error'}">
-      <td style="color:#9ca3af;">${i + 1}</td>
+      <td style="color:#9ca3af;">${r.no || i + 1}</td>
       <td>${r.tahun || '-'}</td>
       <td><code style="font-size:10px;background:#ede9fe;color:#5b21b6;padding:1px 5px;border-radius:3px;">${r.kode_barang || '-'}</code></td>
-      <td style="font-weight:600;min-width:150px;">${r.nama_barang || '-'}</td>
-      <td class="col-merk" style="display: ${isATK ? 'none' : ''}">${r.merk_type || '-'}</td>
+      <td style="font-weight:600;min-width:180px;">${r.nama_barang || '-'}</td>
+      ${!isATK ? `<td style="min-width:160px;">${r.merk_type || '-'}</td>` : ''}
       <td>${r.satuan || '-'}</td>
-      <td style="font-weight:700;">${r.stok_akhir}</td>
-      <td style="font-size:12px;color:#6b7280;">${fmt(r.harga)}</td>
-      <td style="font-size:12px;color:#6b7280;">${fmt(r.total_nilai)}</td>
+      <td style="font-weight:700; text-align: right;">${Number(r.stok_akhir).toLocaleString('id-ID')}</td>
+      <td style="font-size:12px;color:#6b7280; text-align: right;">${fmt(r.harga)}</td>
+      <td style="font-size:12px;font-weight: 600; text-align: right;">${fmt(r.total_nilai)}</td>
       <td>${r.supplier || '-'}</td>
       <td>${r.sumber_pendanaan ? `<span class="tag tag-yellow">${r.sumber_pendanaan}</span>` : '-'}</td>
       <td>${r.kondisi ? `<span class="tag ${r.kondisi === 'Baik' ? 'tag-green' : 'tag-red'}">${r.kondisi}</span>` : '-'}</td>
-      <td style="font-size:12px;">${r.posisi_ruangan || '-'}</td>
-      <td style="font-size:11px;color:#6b7280;">${r.ket || '-'}</td>
-      <td>${r.valid ? '<span class="tag tag-green">Valid</span>' : `<span class="tag tag-red" title="${r.errors.join(', ')}">Error</span>`}</td>
+      <td>${r.posisi_ruangan || '-'}</td>
+      <td style="font-size:11px;color:#6b7280; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${r.ket || ''}">${r.ket || '-'}</td>
+      <td>${r.valid ? '<span class="tag tag-green">✓ Valid</span>' : `<span class="tag tag-red" title="${r.errors.join(', ')}">✗ Error</span>`}</td>
     </tr>
   `).join('');
 }

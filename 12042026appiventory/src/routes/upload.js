@@ -21,6 +21,10 @@ const VALID_KONDISI = ['Baik','Rusak Ringan','Rusak Berat','Tidak Beroperasi',''
 const VALID_SUMBER = ['KEMHAN','KESDAM','SWAKELOLA','Kemhan','Kesdam','Swakelola',''];
 
 // Map kolom Excel → kolom DB
+function hasMerkType(sheetName) {
+  return sheetName.toUpperCase() !== 'ATK';
+}
+
 function mapRow(raw, sheetName) {
   const r = {};
   Object.keys(raw).forEach(k => { r[k.toLowerCase().trim()] = raw[k]; });
@@ -28,26 +32,27 @@ function mapRow(raw, sheetName) {
   const jumlah = parseInt(r['jumlah']) || 0;
   const harga  = parseFloat(r['harga'])  || 0;
   const tahun  = r['tahun'] || '';
+  const totalNilai = parseFloat(r['total nilai'] || r['total_nilai']) || (harga * jumlah);
 
   return {
+    no:               r['no'] || '',
     tahun:            tahun,
     tanggal:          tahun ? `${tahun}-01-01` : null,
     kode_barang:      String(r['kode barang'] || r['kode_barang'] || '').trim(),
     nama_barang:      String(r['nama barang'] || r['nama_barang'] || '').trim(),
     kategori:         sheetName.toUpperCase(),
-    merk_type:        String(r['merk/type'] || r['merk_type'] || r['merk'] || '').trim(),
+    merk_type:        hasMerkType(sheetName) ? String(r['merk/type'] || r['merk_type'] || r['merk'] || '').trim() : null,
     satuan:           String(r['satuan'] || '').trim(),
     stok_awal:        jumlah,
     masuk:            0,
     keluar:           0,
     stok_akhir:       jumlah,
     harga:            harga,
-    total_nilai:      parseFloat(r['total nilai'] || r['total_nilai'] || harga * jumlah) || 0,
+    total_nilai:      totalNilai,
     supplier:         String(r['supplier'] || '').trim(),
     sumber_pendanaan: String(r['sumber dana'] || r['sumber_dana'] || r['sumber_pendanaan'] || '').trim(),
     kondisi:          String(r['kondisi'] || '').trim(),
     posisi_ruangan:   String(r['lokasi'] || r['posisi_ruangan'] || '').trim(),
-    nama_penerima:    String(r['nama penerima'] || r['nama_penerima'] || '').trim(),
     ket:              String(r['keterangan'] || r['ket'] || '').trim(),
   };
 }
@@ -130,13 +135,22 @@ router.post('/preview', requireLogin, upload.single('file'), async (req, res) =>
         return hasNama;
       });
 
-      sheetSummary.push({ sheet: sheetName, total: dataRows.length });
-
+      let sheetValid = 0, sheetInvalid = 0;
       dataRows.forEach((raw, i) => {
         if (allRows.length >= MAX_ROWS) return;
         const row = mapRow(raw, sheetName);
         const errors = validateRow(row, i + 2);
-        allRows.push({ ...row, row_num: i + 2, sheet: sheetName, errors, valid: errors.length === 0 });
+        const isValid = errors.length === 0;
+        if (isValid) sheetValid++; else sheetInvalid++;
+        allRows.push({ ...row, row_num: i + 2, sheet: sheetName, errors, valid: isValid });
+      });
+
+      sheetSummary.push({ 
+        sheet: sheetName, 
+        total: dataRows.length, 
+        valid: sheetValid, 
+        invalid: sheetInvalid,
+        hasMerk: hasMerkType(sheetName)
       });
     }
 

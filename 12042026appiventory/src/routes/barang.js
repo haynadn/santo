@@ -141,6 +141,19 @@ router.put('/:id', requireLogin, async (req, res) => {
   }
 });
 
+// DELETE ALL
+router.delete('/delete-all', requireLogin, async (req, res) => {
+  const kategori = req.body.kategori || 'ALKES';
+  try {
+    await pool.query('DELETE FROM barang WHERE kategori=$1', [kategori]);
+    req.flash('success', `Semua data kategori ${kategori} berhasil dihapus!`);
+    res.redirect(`/barang?kategori=${kategori}`);
+  } catch (err) {
+    req.flash('error', `Gagal menghapus semua data kategori ${kategori}`);
+    res.redirect(`/barang?kategori=${kategori}`);
+  }
+});
+
 // DELETE
 router.delete('/:id', requireLogin, async (req, res) => {
   try {

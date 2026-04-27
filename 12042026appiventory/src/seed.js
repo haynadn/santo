@@ -33,24 +33,7 @@ async function seed() {
 
     await client.query('DELETE FROM barang');
 
-    // BEKKES
-    const bekkes = [
-      ['BKS-001','Paracetamol 500mg','Tablet',200,150,80,'PT Kimia Farma',futureDate(6)],
-      ['BKS-002','Amoxicillin 500mg','Kapsul',100,200,120,'PT Indofarma',futureDate(3)],
-      ['BKS-003','Betadine 100ml','Antiseptik',50,80,30,'CV Medika Jaya',futureDate(12)],
-      ['BKS-004','Rivanol 300ml','Antiseptik',40,60,25,'PT Kalbe Farma',futureDate(9)],
-      ['BKS-005','Plester Luka 5cm','Perawatan',300,500,200,'PT Kimia Farma',futureDate(14)],
-      ['BKS-006','Masker Medis','APD',1000,2000,1500,'CV Medika Jaya',futureDate(8)],
-      ['BKS-007','Sarung Tangan Latex','APD',500,1000,700,'PT Indofarma',futureDate(5)],
-      ['BKS-008','Termometer Digital','Alat',10,5,3,'PT Kimia Farma',null],
-      ['BKS-009','Tensimeter Digital','Alat',5,3,2,'CV Medika Jaya',null],
-      ['BKS-010','Perban Elastis','Perawatan',80,100,60,'PT Kalbe Farma',futureDate(18)],
-    ];
-    for (const [k,n,j,a,m,ke,sup,exp] of bekkes) {
-      const sa=a+m-ke, h=randomChoice([5000,10000,25000,50000,75000]);
-      await client.query(`INSERT INTO barang (tanggal,kode_barang,nama_barang,kategori,jenis,expired,satuan,stok_awal,masuk,keluar,stok_akhir,harga,total_nilai,supplier,ket) VALUES ($1,$2,$3,'BEKKES',$4,$5,'pcs',$6,$7,$8,$9,$10,$11,$12,$13)`,
-        [daysAgo(randomInt(1,30)),k,n,j,exp,a,m,ke,sa,h,h*sa,sup,sa>50?'Stok cukup':'Perlu restock']);
-    }
+
 
     // ALKES
     const alkes = [
@@ -168,7 +151,7 @@ async function seed() {
 
     console.log('✅ Seed berhasil!');
     console.log('👤 Users: admin/admin123, operator/operator123, gudang/gudang123');
-    console.log('📦 Data 8 kategori sudah terisi');
+    console.log('📦 Data 7 kategori sudah terisi');
   } catch(err) {
     console.error('❌ Seed error:', err);
   } finally {

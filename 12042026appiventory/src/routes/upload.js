@@ -16,7 +16,6 @@ const upload = multer({
 });
 
 const KATEGORI_LIST = ['ALKES','ATK','ART','ALSINTOR','ALSATRI','ALKOMLEK','BANGFAS'];
-const MAX_ROWS = 1000;
 const VALID_KONDISI = ['Baik','Rusak Ringan','Rusak Berat','Tidak Beroperasi',''];
 const VALID_SUMBER = ['KEMHAN','KESDAM','SWAKELOLA','Kemhan','Kesdam','Swakelola',''];
 
@@ -137,7 +136,6 @@ router.post('/preview', requireLogin, upload.single('file'), async (req, res) =>
 
       let sheetValid = 0, sheetInvalid = 0;
       dataRows.forEach((raw, i) => {
-        if (allRows.length >= MAX_ROWS) return;
         const row = mapRow(raw, sheetName);
         const errors = validateRow(row, i + 2);
         const isValid = errors.length === 0;
@@ -156,7 +154,7 @@ router.post('/preview', requireLogin, upload.single('file'), async (req, res) =>
 
     const validCount   = allRows.filter(r => r.valid).length;
     const invalidCount = allRows.filter(r => !r.valid).length;
-    const skipped      = Math.max(0, allRows.length - MAX_ROWS);
+    const skipped      = 0;
 
     res.json({
       success: true,

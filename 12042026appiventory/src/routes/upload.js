@@ -24,6 +24,22 @@ function hasMerkType(sheetName) {
   return sheetName.toUpperCase() !== 'ATK';
 }
 
+function formatKondisi(val) {
+  if (!val) return '';
+  const lower = String(val).toLowerCase().trim();
+  const valid = ['Baik', 'Rusak Ringan', 'Rusak Berat', 'Tidak Beroperasi'];
+  const match = valid.find(v => v.toLowerCase() === lower);
+  return match || String(val).trim();
+}
+
+function formatSumber(val) {
+  if (!val) return '';
+  const upper = String(val).toUpperCase().trim();
+  const valid = ['KEMHAN', 'KESDAM', 'SWAKELOLA'];
+  if (valid.includes(upper)) return upper;
+  return String(val).trim();
+}
+
 function mapRow(raw, sheetName) {
   const r = {};
   Object.keys(raw).forEach(k => { r[k.toLowerCase().trim()] = raw[k]; });
@@ -49,8 +65,8 @@ function mapRow(raw, sheetName) {
     harga:            harga,
     total_nilai:      totalNilai,
     supplier:         String(r['supplier'] || '').trim(),
-    sumber_pendanaan: String(r['sumber dana'] || r['sumber_dana'] || r['sumber_pendanaan'] || '').trim(),
-    kondisi:          String(r['kondisi'] || '').trim(),
+    sumber_pendanaan: formatSumber(r['sumber dana'] || r['sumber_dana'] || r['sumber_pendanaan']),
+    kondisi:          formatKondisi(r['kondisi']),
     posisi_ruangan:   String(r['lokasi'] || r['posisi_ruangan'] || '').trim(),
     ket:              String(r['keterangan'] || r['ket'] || '').trim(),
   };

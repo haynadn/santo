@@ -54,17 +54,10 @@
                      value="<%= barang ? barang.nama_barang || '' : '' %>">
             </div>
 
-            <div class="grid grid-2">
-              <div class="form-group">
-                <label>Jenis</label>
-                <input type="text" name="jenis" class="form-control" placeholder="Jenis/tipe barang"
-                       value="<%= barang ? barang.jenis || '' : '' %>">
-              </div>
-              <div class="form-group">
-                <label>Merk / Type Barang</label>
-                <input type="text" name="merk_type" class="form-control" placeholder="cth: Samsung, Philips, dll"
-                       value="<%= barang ? barang.merk_type || '' : '' %>">
-              </div>
+            <div class="form-group">
+              <label>Merk / Type Barang</label>
+              <input type="text" name="merk_type" class="form-control" placeholder="cth: Samsung, Philips, dll"
+                     value="<%= barang ? barang.merk_type || '' : '' %>">
             </div>
 
             <div class="grid grid-2">
@@ -89,7 +82,7 @@
                 <label>Sumber Pendanaan</label>
                 <select name="sumber_pendanaan" class="form-control">
                   <option value="">-- Pilih Sumber --</option>
-                  <% ['Kemhan','Kesdam','Swakelola'].forEach(s => { %>
+                  <% ['Kemhan','Kesdam','Swakelola','DIPA PNBP RS'].forEach(s => { %>
                   <option value="<%= s %>" <%= barang && barang.sumber_pendanaan === s ? 'selected' : '' %>><%= s %></option>
                   <% }) %>
                 </select>
